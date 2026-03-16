@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>옥계e편한세상 버스정보 조회</title>
+    <style>
+        :root {
+            --bg: #f2f2f7; --card: #ffffff; --accent: #007aff;
+            --text: #000000; --sec-text: #8e8e93; --line: #e5e5ea;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000; --card: #1c1c1e; --text: #ffffff;
+                --sec-text: #98989d; --line: #38383a;
+            }
+        }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-bottom: 50px; }
+        .header { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 16px; border-bottom: 0.5px solid var(--line); text-align: center; }
+        @media (prefers-color-scheme: dark) { .header { background: rgba(0,0,0,0.8); } }
+        .header h1 { margin: 0; font-size: 17px; font-weight: 700; }
+
+        .container { padding: 16px; }
+        .section-title { font-size: 19px; font-weight: 800; margin: 20px 0 12px 5px; }
+
+        /* 타이틀 좌우 배치를 위한 스타일 */
+        .title-flex { display: flex; justify-content: space-between; align-items: center; margin: 20px 5px 12px 5px; }
+        .title-flex div { font-size: 17px; font-weight: 800; }
+
+        .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
+        .live-item { background: var(--card); border-radius: 14px; padding: 12px; text-decoration: none; color: inherit; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+        .live-item:active { background: rgba(0,0,0,0.05); }
+        .bus-top { display: flex; justify-content: space-between; align-items: center; }
+        .bus-num { font-size: 18px; font-weight: 800; color: var(--accent); }
+        .live-dot { width: 6px; height: 6px; background: #ff9500; border-radius: 50%; }
+        .path-text { font-size: 11px; color: var(--sec-text); font-weight: 500; line-height: 1.2; height: 26px; overflow: hidden; }
+        .dir-label { font-size: 10px; font-weight: 700; color: white; background: #8e8e93; padding: 2px 6px; border-radius: 4px; align-self: flex-start; }
+
+        .tab-bar { display: flex; background: rgba(120, 120, 128, 0.12); border-radius: 10px; padding: 2px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; border: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; background: none; color: var(--sec-text); cursor: pointer; }
+        .tab-btn.active { background: var(--card); color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .time-table-card { background: var(--card); border-radius: 16px; padding: 0 16px; border: 1px solid var(--line); }
+        .time-row { padding: 16px 0; border-bottom: 0.5px solid var(--line); }
+        .time-row:last-child { border-bottom: none; }
+        
+        .time-info-header { margin-bottom: 10px; }
+        .time-bus-main { font-size: 16px; font-weight: 800; color: var(--accent); }
+        .time-origin { font-size: 11px; color: var(--sec-text); font-weight: 500; margin-left: 4px; }
+
+        .time-values { display: flex; flex-wrap: wrap; gap: 6px; }
+        .time-val { font-size: 12px; font-weight: 600; background: var(--bg); padding: 5px 8px; border-radius: 8px; color: var(--text); }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header"><h1>옥계e편한세상 버스정보 조회</h1></div>
+
+    <div class="container">
+        <div class="title-flex">
+            <div>🏠 도착지 (시내 -> 집)</div>
+            <div>🚌 출발지 (집 -> 시내)</div>
+        </div>
+
+        <div class="live-grid">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=190&routeId=19010" class="live-item">
+                    <div class="bus-top"><span class="bus-num">190</span><div class="live-dot"></div></div>
+                    <span class="path-text">구미역 → 공단 → <b>옥계e편한세상 아파트</b></span><span class="dir-label">도착 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=191&routeId=19110" class="live-item">
+                    <div class="bus-top"><span class="bus-num">191</span><div class="live-dot"></div></div>
+                    <span class="path-text">구미역 → 신평 → <b>옥계e편한세상 아파트</b></span><span class="dir-label">도착 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=193&routeId=19310" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#34c759;">193</span><div class="live-dot"></div></div>
+                    <span class="path-text">구미역 → 옥계e편한세상 아파트 → <b>장천</b></span><span class="dir-label">도착 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=195&routeId=19510" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#ff2d55;">195</span><div class="live-dot"></div></div>
+                    <span class="path-text">구미역 → 옥계e편한세상 아파트 → <b>아사히글라스</b></span><span class="dir-label">도착 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=900&routeId=90010" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#5856d6;">900</span><div class="live-dot"></div></div>
+                    <span class="path-text">구미역 → 옥계e편한세상 아파트 →<b>아사히글라스</b></span><span class="dir-label">도착 정보</span>
+                </a>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=190&routeId=19020" class="live-item">
+                    <div class="bus-top"><span class="bus-num">190</span><div class="live-dot"></div></div>
+                    <span class="path-text"><b>옥계e편한세상 아파트</b> → 공단 → 구미역</span><span class="dir-label" style="background:var(--accent)">출발 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=191&routeId=19120" class="live-item">
+                    <div class="bus-top"><span class="bus-num">191</span><div class="live-dot"></div></div>
+                    <span class="path-text"><b>옥계e편한세상 아파트</b> → 신평 → 구미역</span><span class="dir-label" style="background:var(--accent)">출발 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=193&routeId=19320" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#34c759;">193</span><div class="live-dot"></div></div>
+                    <span class="path-text"><b>장천</b> → 옥계e편한세상 아파트 → 구미역</span><span class="dir-label" style="background:var(--accent)">출발 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=195&routeId=19520" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#ff2d55;">195</span><div class="live-dot"></div></div>
+                    <span class="path-text"><b>아사히글라스</b> → 옥계e편한세상 아파트 → 구미역</span><span class="dir-label" style="background:var(--accent)">출발 정보</span>
+                </a>
+                <a href="https://bis.gumi.go.kr/realtime/busInfo?tab=.tab1&id=900&routeId=90020" class="live-item">
+                    <div class="bus-top"><span class="bus-num" style="color:#5856d6;">900</span><div class="live-dot"></div></div>
+                    <span class="path-text"><b>아사히글라스</b> → 옥계e편한세상 아파트 → 구미역</span><span class="dir-label" style="background:var(--accent)">출발 정보</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="section-title">🕒 출발 시간표 (12H)</div>
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTime('weekday')">평일</button>
+            <button class="tab-btn" onclick="switchTime('weekend')">주말/공휴일</button>
+        </div>
+
+        <div id="weekday-times" class="time-table-card">
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">190</span><span class="time-origin">(옥계이편한세상APT앞 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 07:46</span><span class="time-val">오전 09:06</span><span class="time-val">오전 10:09</span><span class="time-val">오전 11:28</span><span class="time-val">오후 12:45</span><span class="time-val">오후 01:51</span><span class="time-val">오후 03:08</span><span class="time-val">오후 04:14</span><span class="time-val">오후 05:31</span><span class="time-val">오후 06:49</span><span class="time-val">오후 08:07</span><span class="time-val">오후 08:53</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">191</span><span class="time-origin">(옥계이편한세상APT앞 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 07:36</span><span class="time-val">오전 08:27</span><span class="time-val">오전 10:51</span><span class="time-val">오전 11:43</span><span class="time-val">오후 02:06</span><span class="time-val">오후 02:31</span><span class="time-val">오후 04:55</span><span class="time-val">오후 05:46</span><span class="time-val">오후 07:56</span><span class="time-val">오후 08:36</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">193</span><span class="time-origin">(장천버스터미널 종점 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 07:30</span><span class="time-val">오전 09:55</span><span class="time-val">오후 12:45</span><span class="time-val">오후 03:33</span><span class="time-val">오후 06:15</span><span class="time-val">오후 09:15</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">195</span><span class="time-origin">(아사히글라스 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 07:25</span><span class="time-val">오전 08:00</span><span class="time-val">오전 10:10</span><span class="time-val">오전 11:15</span><span class="time-val">오후 12:50</span><span class="time-val">오후 02:23</span><span class="time-val">오후 03:20</span><span class="time-val">오후 05:15</span><span class="time-val">오후 06:15</span><span class="time-val">오후 08:15</span><span class="time-val">오후 08:35</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">900</span><span class="time-origin">(아사히글라스 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 09:24</span><span class="time-val">오전 10:00</span><span class="time-val">오전 11:30</span><span class="time-val">오후 12:20</span><span class="time-val">오후 02:00</span><span class="time-val">오후 02:35</span><span class="time-val">오후 04:20</span><span class="time-val">오후 05:05</span><span class="time-val">오후 06:40</span><span class="time-val">오후 07:37</span><span class="time-val">오후 08:50</span><span class="time-val">오후 09:40</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="weekend-times" class="time-table-card hidden">
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">190</span><span class="time-origin">(옥계이편한세상APT앞 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 08:18</span><span class="time-val">오전 09:28</span><span class="time-val">오전 10:40</span><span class="time-val">오전 11:53</span><span class="time-val">오후 01:03</span><span class="time-val">오후 03:15</span><span class="time-val">오후 04:06</span><span class="time-val">오후 05:33</span><span class="time-val">오후 08:13</span><span class="time-val">오후 09:53</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">191</span><span class="time-origin">(옥계이편한세상APT앞 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 08:57</span><span class="time-val">오전 11:29</span><span class="time-val">오후 02:26</span><span class="time-val">오후 03:54</span><span class="time-val">오후 05:14</span><span class="time-val">오후 06:44</span><span class="time-val">오후 07:59</span><span class="time-val">오후 09:48</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">193</span><span class="time-origin">(장천버스터미널 종점 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 07:30</span><span class="time-val">오전 09:55</span><span class="time-val">오후 12:45</span><span class="time-val">오후 03:33</span><span class="time-val">오후 06:15</span><span class="time-val">오후 09:15</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">195</span><span class="time-origin">(아사히글라스 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 08:00</span><span class="time-val">오전 11:15</span><span class="time-val">오후 02:23</span><span class="time-val">오후 05:15</span><span class="time-val">오후 08:15</span>
+                </div>
+            </div>
+            <div class="time-row">
+                <div class="time-info-header"><span class="time-bus-main">900</span><span class="time-origin">(아사히글라스 출발)</span></div>
+                <div class="time-values">
+                    <span class="time-val">오전 09:24</span><span class="time-val">오전 10:00</span><span class="time-val">오전 11:30</span><span class="time-val">오후 12:20</span><span class="time-val">오후 02:00</span><span class="time-val">오후 02:35</span><span class="time-val">오후 04:20</span><span class="time-val">오후 05:05</span><span class="time-val">오후 06:40</span><span class="time-val">오후 07:37</span><span class="time-val">오후 08:50</span><span class="time-val">오후 09:40</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTime(type) {
+            const isWeekday = type === 'weekday';
+            document.getElementById('weekday-times').classList.toggle('hidden', !isWeekday);
+            document.getElementById('weekend-times').classList.toggle('hidden', isWeekday);
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', (isWeekday && btn.innerText === '평일') || (!isWeekday && btn.innerText !== '평일'));
+            });
+        }
+    </script>
+</body>
+</html>
