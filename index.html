@@ -25,7 +25,10 @@
 
         /* 타이틀 좌우 배치를 위한 스타일 */
         .title-flex { display: flex; justify-content: space-between; align-items: center; margin: 20px 5px 12px 5px; }
-        .title-flex div { font-size: 17px; font-weight: 800; }
+        .title-flex div { font-size: 15px; font-weight: 800; }
+        
+        /* 실시간 버스 위치 링크 스타일 */
+        .live-link { font-size: 13px; font-weight: 600; color: var(--accent); text-decoration: none; padding: 4px 8px; background: rgba(0,122,255,0.1); border-radius: 6px; }
 
         .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px; }
         .live-item { background: var(--card); border-radius: 14px; padding: 12px; text-decoration: none; color: inherit; border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
@@ -60,8 +63,9 @@
 
     <div class="container">
         <div class="title-flex">
-            <div>🏠 도착지 (시내 -> 집)</div>
-            <div>🚌 출발지 (집 -> 시내)</div>
+            <div>🏠 도착지</div>
+            <a href="https://bis.gumi.go.kr/realtime/busInfo?query=10181" class="live-link" target="_blank">📍 옥계이편한세상APT앞 실시간 버스현황</a>
+            <div>🚌 출발지</div>
         </div>
 
         <div class="live-grid">
