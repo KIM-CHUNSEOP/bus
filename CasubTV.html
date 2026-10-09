@@ -630,12 +630,10 @@ function renderList(onlyCurrent){
     const d = document.createElement("div");
     d.className = "it" + (i===index ? " cur" : "") + (i===cursor ? " sel" : ""); d.dataset.i = i;
     const [cur] = S.epgOn ? nowNext(c) : [null];
-    d.innerHTML = `${c.logo ? `<img loading="lazy" referrerpolicy="no-referrer" alt="">` : ""}<div class="t"><div class="n"></div><div class="p"></div></div><button class="star" title="즐겨찾기">★</button>`;
+    d.innerHTML = `${c.logo ? `<img loading="lazy" referrerpolicy="no-referrer" alt="">` : ""}<div class="t"><div class="n"></div><div class="p"></div></div>`;
     if(c.logo) d.querySelector("img").src = c.logo, d.querySelector("img").onerror = e=>e.target.remove();
     d.querySelector(".n").textContent = `${i+1}  ${c.title}`;
     d.querySelector(".p").textContent = cur ? cur.title : c.group;
-    const st = d.querySelector(".star"); st.classList.toggle("on", S.favs.has(c.name));
-    st.onclick = e=>{ e.stopPropagation(); toggleFav(c.name); st.classList.toggle("on", S.favs.has(c.name)); keepListAlive(); };
     d.onclick = ()=>select(i);
     frag.appendChild(d);
   });
