@@ -756,7 +756,8 @@ if("mediaSession" in navigator){
 }
 
 /* ───────── 환경설정 ───────── */
-const TABS = ["화면", "재생", "채널", "기타"];
+const TABS = ["화면", "재생"];
+S.favOnly = false; // '즐겨찾기만 보기' 설정 항목을 없앴으므로 예전에 켜 둔 값은 끈다
 let sTab = 0, sSub = 0;
 function openSettings(){ closeList(); sTab = 0; sSub = 0; $("settings").classList.remove("hidden"); renderSettings(); }
 function closeSettings(){ $("settings").classList.add("hidden"); }
@@ -829,15 +830,6 @@ function renderSettings(){
     add(swRow("재생 불가 채널 자동 건너뛰기", "모든 주소가 실패하면 다음 채널로 이동합니다", S.skipOn, v=>{ S.skipOn = v; store.set("skip_on", v); if(!v){ clearTimeout(skipTimer); skipTimer = null; } }));
     add(head("건너뛰기 대기 시간"));
     add(tiles(SKIP_DELAYS.map(s=>s+"초"), S.skipIdx, i=>{ S.skipIdx = i; store.set("skip_delay", i); }));
-  } else if(sTab === 2){
-    add(swRow("즐겨찾기만 보기", "즐겨찾기가 없으면 전체를 보여 줍니다", S.favOnly, v=>{ S.favOnly = v; store.set("fav_only", v); rebuild(); }));
-    add(actionRow("즐겨찾기 편집", `현재 ${S.favs.size}개`, ()=>{ sSub = 2; renderSettings(); }));
-    add(actionRow("숨겨진 채널 보기", "재생이 안 되거나 만료되어 숨겨진 채널", ()=>{ sSub = 1; renderSettings(); }));
-  } else {
-    add(head("취침 예약", "시간이 되면 재생을 정지합니다"));
-    add(tiles(["끄기","1시간","2시간","3시간","4시간"], S.sleepH, i=>setSleep(i)));
-    add(actionRow("시작 방송", S.startup ? (all.find(c=>c.name===S.startup)?.title || S.startup) : "마지막 시청 방송", ()=>{ sSub = 4; renderSettings(); }));
-    add(actionRow("채널 목록 새로고침", "소스에서 목록과 편성표를 다시 받습니다", ()=>{ closeSettings(); toast("채널 목록을 새로 받는 중…"); reload(false); loadEpg(); }));
   }
   const c = document.createElement("button"); c.className = "close"; c.textContent = "닫기"; c.onclick = closeSettings; add(c);
 }
