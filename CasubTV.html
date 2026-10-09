@@ -153,6 +153,9 @@ const BAD_TTL = 30*60e3;
 const BLOCKED = new Set(["한국영화1","한국영화2","한국영화3","CNN","CBS News","BBC","ANTV","NDTV","F1","FAILARMY"]); // 목록에서 완전히 뺄 채널
 const BLOCKED_GROUPS = new Set(["ENGLISH"]); // 이 그룹의 채널은 전부 뺀다(대문자로 비교)
 const MAX_CHANNELS = 60; // 61번째 채널부터는 목록에서 제외
+const LOGO_FALLBACK = { // 서버 목록(koreatv.json)에 logo가 비어 있는 채널용 보완 로고
+  "TBSTV": "https://commons.wikimedia.org/wiki/Special:FilePath/Traffic_Broadcasting_System_logo.png",
+};
 
 /* ───────── 저장소 ───────── */
 const store = {
@@ -216,7 +219,7 @@ function parseChannels(text){
     if(BLOCKED.has(o.name) || BLOCKED.has(o.title) || BLOCKED_GROUPS.has((o.group||"").trim().toUpperCase())) continue;
     const uris = (o.uris||[]).filter(u => typeof u==="string" && u.startsWith("http"));
     if(!uris.length) continue;
-    out.push({group:o.group||"", name:o.name||"", title:o.title || o.name, logo:o.logo||"", uris, headers:o.headers||{}});
+    out.push({group:o.group||"", name:o.name||"", title:o.title || o.name, logo:o.logo || LOGO_FALLBACK[o.name] || "", uris, headers:o.headers||{}});
   }
   return mergeSameName(out);
 }
