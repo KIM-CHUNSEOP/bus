@@ -78,8 +78,6 @@ video.cover{object-fit:cover}video.fill{object-fit:fill}
 .it .t{flex:1;min-width:0}
 .it .n{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it .p{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.it .star{font-size:20px;color:#555;background:none;border:0;cursor:pointer;padding:4px}
-.it .star.on{color:var(--yellow)}
 #aspectBtn{position:fixed;right:18px;bottom:18px;z-index:12;background:rgba(255,255,255,.22);width:46px;height:46px;border-radius:50%;border:0;color:#fff;font-size:18px;cursor:pointer;opacity:0;transition:opacity .25s}
 body.ui #aspectBtn{opacity:1}
 #menuBtn{position:fixed;left:14px;top:14px;z-index:12;background:rgba(255,255,255,.22);width:46px;height:46px;border-radius:50%;border:0;color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .25s}
@@ -103,8 +101,6 @@ body:not(.ui){cursor:none}
 .tiles{display:flex;gap:8px;padding:0 16px 10px;flex-wrap:wrap}
 .tiles button{background:#262C35;color:var(--txt);border:0;border-radius:10px;padding:10px 16px;font-size:15px;cursor:pointer}
 .tiles button.on{background:#1E88E5;color:#fff}
-.sub-h{padding:12px 16px 4px;font-size:20px;display:flex;align-items:center;gap:10px}
-.sub-h button{background:#262C35;color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
 .close{margin:8px 16px;background:#262C35;color:#fff;border:0;border-radius:10px;padding:12px;width:calc(100% - 32px);font-size:16px;cursor:pointer}
 @media(max-width:560px){#tabs{width:92px}#tabs div{padding:12px 10px;font-size:14px}}
 </style>
@@ -166,8 +162,7 @@ const S = {
   aspect: store.get("aspect", 0), aspectOn: store.get("aspect_on", true),
   swipeVol: store.get("swipe_vol", true), stopBtn: store.get("stop_btn", true),
   skipOn: store.get("skip_on", true), skipIdx: store.get("skip_delay", 1),
-  favs: new Set(store.get("favs", [])), favOnly: store.get("fav_only", false),
-  startup: store.get("startup", null), last: store.get("last", null),
+  last: store.get("last", null),
   sleepH: 0,
 };
 
@@ -284,15 +279,22 @@ let bad = (() => { const m = store.get("bad", {}); const now = Date.now(); for(c
 const markBad = n => { bad[n] = Date.now(); store.set("bad", bad); };
 const clearBad = n => { if(bad[n]){ delete bad[n]; store.set("bad", bad); } };
 
+/* ───────── 채널 점검: 실제로 재생 가능한 채널만 목록에 올린다 ─────────
+   목록의 각 채널 주소를 미리 받아 보고(재생목록 → 첫 조각), 열리는 채널만 원래 순서대로 1~60번에 배치한다.
+   결과는 30분간 저장해 두고, 재생 중 실패한 채널은 목록에서 뺀다. */
+const OK_TTL = 30*60e3;
+let okc = (() => { const m = store.get("okc", {}); const now = Date.now(); for(const k in m) if(now - m[k].t > OK_TTL) delete m[k]; return m; })();
+const okSet = new Set(Object.keys(okc));
+const okMark = (name, uri) => { okc[name] = {t: Date.now(), uri}; okSet.add(name); store.set("okc", okc); clearBad(name); };
+const okDrop = name => { delete okc[name]; okSet.delete(name); store.set("okc", okc); markBad(name); };
+/** 점검에서 정상이던 주소를 맨 앞으로(채널 전환 시 죽은 주소를 먼저 시도하지 않게). */
+const bestFirst = list => list.map(c=>{ const u = okc[c.name]?.uri; return u && c.uris.includes(u) && c.uris[0] !== u ? {...c, uris:[u, ...c.uris.filter(x=>x!==u)]} : c; });
+
 /* ChannelFilter */
 const Filter = {
+  /** 점검에서 정상으로 확인되고 만료·실패 기록이 없는 채널, 앞에서 MAX_CHANNELS개. */
   visible(list, now=Date.now()){
-    const r = list.filter(c => !bad[c.name] && !isExpired(c, now));
-    return (r.length ? r : list).slice(0, MAX_CHANNELS);
-  },
-  shown(visible){
-    const r = S.favOnly && visible.some(c=>S.favs.has(c.name)) ? visible.filter(c=>S.favs.has(c.name)) : visible;
-    return r.slice(0, MAX_CHANNELS);
+    return list.filter(c => okSet.has(c.name) && !bad[c.name] && !isExpired(c, now)).slice(0, MAX_CHANNELS);
   },
   keepPlaying(visible, source, name, holding){
     if(!name || visible.some(c=>c.name===name) || !holding) return visible;
@@ -300,7 +302,94 @@ const Filter = {
     const at = visible.filter(v => source.findIndex(c=>c.name===v.name) < pos).length;
     const r = visible.slice(); r.splice(at, 0, source[pos]); return r;
   },
+  /** 최종 목록: 재생 중인 방송은 남기되 전체는 MAX_CHANNELS개를 넘지 않는다. */
+  build(source, playingName, holding){
+    return this.keepPlaying(this.visible(source), source, playingName, holding).slice(0, MAX_CHANNELS);
+  },
 };
+
+async function pfetch(url, headers, signal){ return fetch(url, {headers, signal, cache:"no-store"}); }
+const CHINESE_LANG = /^(zh|zho|chi|cmn|yue|cn)([-_].*)?$/i;
+/** 재생목록이 열리고 첫 조각(또는 암호 키)이 실제로 받아지는지. */
+async function probeUri(url, headers, depth=0){
+  const ac = new AbortController(), t = setTimeout(()=>ac.abort(), 7000);
+  try{
+    const r = await pfetch(url, headers, ac.signal); if(!r.ok) return false;
+    const text = (await r.text()).replace(/^﻿/, "");
+    if(!/^\s*#EXTM3U/.test(text)) return false;
+    const lines = text.split(/\r?\n/).map(s=>s.trim());
+    const si = lines.findIndex(l=>l.startsWith("#EXT-X-STREAM-INF"));
+    if(si >= 0){ // 마스터 재생목록
+      const langs = lines.filter(l=>l.startsWith("#EXT-X-MEDIA") && l.includes("TYPE=AUDIO")).map(l=>(/LANGUAGE="([^"]*)"/.exec(l)||[])[1]).filter(Boolean);
+      if(langs.length && langs.every(l=>CHINESE_LANG.test(l))) return false; // 중국어 방송
+      const v = lines.slice(si+1).find(l=>l && !l.startsWith("#")); if(!v) return false;
+      if(depth >= 2) return true;
+      clearTimeout(t);
+      return await probeUri(new URL(v, url).href, headers, depth+1);
+    }
+    if(lines.includes("#EXT-X-ENDLIST")){ // 이미 끝난 방송
+      const total = lines.filter(l=>l.startsWith("#EXTINF:")).reduce((s,l)=>s + (parseFloat(l.slice(8)) || 0), 0);
+      if(total < 120) return false;
+    }
+    const key = lines.find(l=>l.startsWith("#EXT-X-KEY") && !l.includes("METHOD=NONE"));
+    if(key){
+      const ku = /URI="([^"]*)"/.exec(key)?.[1];
+      if(ku){ const kr = await pfetch(new URL(ku, url).href, headers, ac.signal); if(!kr.ok) return false; }
+      return true;
+    }
+    const map = lines.find(l=>l.startsWith("#EXT-X-MAP"));
+    const seg = (map && /URI="([^"]*)"/.exec(map)?.[1]) || lines.find(l=>l && !l.startsWith("#"));
+    if(!seg) return false;
+    const sr = await pfetch(new URL(seg, url).href, headers, ac.signal); if(!sr.ok) return false;
+    const rd = sr.body?.getReader();
+    if(!rd) return true;
+    const {value} = await rd.read(); ac.abort();
+    return !!(value && value.length);
+  } catch { return false; } finally { clearTimeout(t); }
+}
+async function probeChannel(c){
+  for(const u of liveUris(c)){
+    for(let k = 0; k < 2; k++){ // 일시적 오류로 숨기지 않도록 한 번 더
+      if(await Promise.race([probeUri(u, c.headers), new Promise(r=>setTimeout(()=>r(false), 20000))])) return u;
+    }
+  }
+  return null;
+}
+
+let probeGen = 0, probeBusy = false, probeTimer = null;
+function scheduleApply(){ clearTimeout(probeTimer); probeTimer = setTimeout(applyProbe, 250); }
+/** 점검 결과를 목록에 반영한다. 처음 하나가 나오면 바로 재생을 시작하고, 이후는 보던 방송을 유지한 채 목록만 늘린다. */
+function applyProbe(){
+  if(!all.length) return;
+  if(!channels.length){
+    const vis = Filter.build(all, null, false); if(!vis.length) return;
+    channels = vis;
+    index = cursor = Math.max(0, vis.findIndex(c=>c.name===S.last));
+    renderList(); if(!stopped) play(true);
+  } else rebuild();
+}
+async function probeAll(){
+  const gen = ++probeGen; probeBusy = true;
+  const order = bestFirst(all).filter(c => !okSet.has(c.name) && !bad[c.name] && !isExpired(c));
+  const li = order.findIndex(c=>c.name===S.last); if(li > 0) order.unshift(order.splice(li, 1)[0]); // 마지막 시청 방송을 먼저
+  let next = 0;
+  const worker = async () => {
+    while(gen === probeGen && next < order.length){
+      if(Filter.visible(all).length >= MAX_CHANNELS) return; // 60개가 채워지면 더 점검하지 않는다
+      const c = order[next++];
+      const u = await probeChannel(c);
+      if(gen !== probeGen) return;
+      if(u){ okMark(c.name, u); all = all.map(x=>x.name===c.name ? {...x, uris:[u, ...x.uris.filter(y=>y!==u)]} : x); }
+      else markBad(c.name);
+      scheduleApply();
+    }
+  };
+  await Promise.all(Array.from({length:6}, worker));
+  if(gen === probeGen){
+    probeBusy = false; scheduleApply();
+    if(!channels.length && !Filter.visible(all).length) setMsg("재생 가능한 채널이 없습니다. 네트워크를 확인하고 새로고침하세요");
+  }
+}
 
 /* ───────── EPG (XMLTV) ───────── */
 let epg = {}, epgEnd = 0, lastEpgSync = 0, epgLoading = false;
@@ -362,7 +451,7 @@ const rebuild = () => {
   if(!all.length) return;
   const cur = channels[index]?.name;
   const holding = video.readyState >= 3 || (loading && !failed);
-  const list = Filter.shown(Filter.keepPlaying(Filter.visible(all), all, cur, holding));
+  const list = Filter.build(all, cur, holding);
   if(!list.length) return;
   channels = list;
   const pos = list.findIndex(c=>c.name===cur);
@@ -440,9 +529,9 @@ function onStreamError(){
     refreshedOnce = true;
     loadChannels().then(list=>{
       if(!list.length) return giveUp("재생 불가");
-      all = prefer(list);
+      all = bestFirst(prefer(list));
       if(channels[index]?.name !== ch.name) return; // 그 사이 사용자가 채널을 바꿈
-      const vis = Filter.shown(Filter.visible(all));
+      const vis = Filter.build(all, ch.name, true);
       channels = vis; index = cursor = Math.max(0, vis.findIndex(c=>c.name===ch.name));
       uriIdx = 0; play(false);
     }).catch(()=>giveUp("재생 불가"));
@@ -452,7 +541,7 @@ function onStreamError(){
 function giveUp(msg){
   const ch = channels[index];
   setMsg(msg); failed = true; loading = false; lastRetry = performance.now();
-  if(ch) markBad(ch.name);
+  if(ch) okDrop(ch.name); // 재생 실패: 목록에서 빼고 30분간 다시 점검하지 않는다
   scheduleSkip();
 }
 
@@ -468,6 +557,7 @@ function scheduleSkip(){
     index = cursor = next;
     toast(`${from.title} 재생 불가 · 다음 채널(${channels[index].title})로 이동했습니다`);
     play();
+    rebuild(); // 실패한 채널을 목록에서 뺀다(보던 방송은 이름으로 유지)
   }, SKIP_DELAYS[S.skipIdx] * 1000);
 }
 
@@ -481,7 +571,7 @@ function recoverStall(){
 /* 재생 이벤트 */
 video.addEventListener("playing", ()=>{
   setMsg(""); loading = false; failed = false; recoverCount = 0; stallSince = 0; skipCount = 0;
-  const ch = channels[index]; if(ch) clearBad(ch.name);
+  const ch = channels[index]; if(ch) okMark(ch.name, ch.uris[uriIdx]);
   updateBanner();
   if(!epgShown){ epgShown = true; showEpgInfo(); }
   if("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
@@ -539,15 +629,10 @@ async function reload(initial){
     let loaded = await loadChannels(), tries = 0;
     while(!loaded.length && tries < 12){ setMsg("채널 목록을 불러오는 중… 네트워크 확인"); await new Promise(r=>setTimeout(r,5000)); loaded = await loadChannels(); tries++; }
     if(!loaded.length){ setMsg("채널 목록을 불러올 수 없습니다. 네트워크를 확인하고 새로고침하세요"); return; }
-    all = prefer(loaded);
-    const playing = channels[index]?.name;
-    const vis = Filter.shown(Filter.keepPlaying(Filter.visible(all), all, playing, video.readyState >= 3));
-    const curName = playing ?? (S.startup && vis.some(c=>c.name===S.startup) ? S.startup : S.last);
-    channels = vis;
-    index = cursor = Math.max(0, vis.findIndex(c=>c.name===curName));
-    const keep = !initial && playing && vis[index]?.name === playing && video.readyState > 0;
-    renderList();
-    if(!keep && !stopped) play(true);
+    all = bestFirst(prefer(loaded));
+    if(!channels.length) setMsg("재생 가능한 채널을 찾는 중…");
+    applyProbe();   // 이미 점검된(저장된) 채널로 먼저 목록을 만들고
+    probeAll();     // 나머지는 백그라운드에서 점검해 하나씩 목록에 추가한다
   } finally { lastChannelSync = performance.now(); reloading = false; }
 }
 
@@ -665,13 +750,6 @@ $("bStop").onclick = toggleStop;
 $("bFull").onclick = toggleFullscreen;
 $("bSettings").onclick = ()=>openSettings();
 
-/* 즐겨찾기 */
-function toggleFav(name){
-  S.favs.has(name) ? S.favs.delete(name) : S.favs.add(name);
-  store.set("favs", [...S.favs]);
-  if(S.favOnly && !listOpen) rebuild();
-}
-
 /* 화면 비율 / 전체화면 */
 function applyAspect(){ video.className = ASPECT_CLS[S.aspectOn ? S.aspect : 0]; $("aspectBtn").classList.toggle("hidden", !S.aspectOn); }
 $("aspectBtn").onclick = ()=>{ if(!S.aspectOn) return; S.aspect = (S.aspect+1)%3; store.set("aspect", S.aspect); applyAspect(); toast("화면 비율: " + ASPECTS[S.aspect]); };
@@ -755,9 +833,8 @@ if("mediaSession" in navigator){
 
 /* ───────── 환경설정 ───────── */
 const TABS = ["화면", "재생"];
-S.favOnly = false; // '즐겨찾기만 보기' 설정 항목을 없앴으므로 예전에 켜 둔 값은 끈다
-let sTab = 0, sSub = 0;
-function openSettings(){ closeList(); sTab = 0; sSub = 0; $("settings").classList.remove("hidden"); renderSettings(); }
+let sTab = 0;
+function openSettings(){ closeList(); sTab = 0; $("settings").classList.remove("hidden"); renderSettings(); }
 function closeSettings(){ $("settings").classList.add("hidden"); }
 $("settings").addEventListener("click", e=>{ if(e.target.id === "settings") closeSettings(); });
 
@@ -784,37 +861,9 @@ function actionRow(title, desc, fn){
 
 function renderSettings(){
   const tabs = $("tabs"); tabs.innerHTML = "";
-  TABS.forEach((n,i)=>{ const d = document.createElement("div"); d.textContent = n; if(i===sTab && !sSub) d.className = "on"; d.onclick = ()=>{ sTab = i; sSub = 0; renderSettings(); }; tabs.appendChild(d); });
+  TABS.forEach((n,i)=>{ const d = document.createElement("div"); d.textContent = n; if(i===sTab) d.className = "on"; d.onclick = ()=>{ sTab = i; renderSettings(); }; tabs.appendChild(d); });
   const b = $("sbody"); b.innerHTML = "";
   const add = el => b.appendChild(el);
-
-  if(sSub === 1){ // 숨겨진 채널
-    const h = document.createElement("div"); h.className = "sub-h"; h.innerHTML = `<button>← 뒤로</button><span>숨겨진 채널</span>`; h.querySelector("button").onclick = ()=>{ sSub = 0; renderSettings(); }; add(h);
-    const hid = all.map(c=>[c, isExpired(c) ? "만료" : bad[c.name] ? "재생 불가" : null]).filter(x=>x[1]);
-    if(!hid.length) add(head("숨겨진 채널이 없습니다"));
-    hid.forEach(([c, why])=>add(head(c.title, why)));
-    add(actionRow("재생 불가 기록 지우기", "숨겨진 채널을 다시 목록에 포함합니다", ()=>{ bad = {}; store.set("bad", bad); rebuild(); sSub = 0; renderSettings(); }));
-    return;
-  }
-  if(sSub === 2){ // 즐겨찾기 편집
-    const h = document.createElement("div"); h.className = "sub-h";
-    const edit = Filter.visible(all).filter((c,i,a)=>a.findIndex(x=>x.name===c.name)===i);
-    const cnt = edit.filter(c=>S.favs.has(c.name)).length;
-    h.innerHTML = `<button>← 저장</button><span>즐겨찾기 편집 (${cnt}개)</span><button>전체선택</button>`;
-    const [back, allb] = h.querySelectorAll("button");
-    back.onclick = ()=>{ sSub = 0; rebuild(); renderSettings(); };
-    allb.onclick = ()=>{ const names = edit.map(c=>c.name); const allOn = names.every(n=>S.favs.has(n)); names.forEach(n=>allOn ? S.favs.delete(n) : S.favs.add(n)); store.set("favs",[...S.favs]); renderSettings(); };
-    add(h);
-    edit.forEach(c=>add(swRow(c.title, c.group, S.favs.has(c.name), v=>{ v ? S.favs.add(c.name) : S.favs.delete(c.name); store.set("favs",[...S.favs]); })));
-    return;
-  }
-  if(sSub === 4){ // 시작 방송
-    const h = document.createElement("div"); h.className = "sub-h"; h.innerHTML = `<button>← 뒤로</button><span>시작 방송</span>`; h.querySelector("button").onclick = ()=>{ sSub = 0; renderSettings(); }; add(h);
-    const pick = (name, label)=>{ const r = actionRow(label, name===S.startup ? "✓ 선택됨" : "", ()=>{ S.startup = name; store.set("startup", name); toast("시작 방송: " + label); sSub = 0; renderSettings(); }); add(r); };
-    pick(null, "마지막 시청 방송");
-    channels.forEach(c=>pick(c.name, c.title));
-    return;
-  }
 
   if(sTab === 0){
     add(swRow("EPG 표시", "채널이 나오면 하단에 편성 정보를 잠깐 보여 줍니다", S.epgOn, v=>{ S.epgOn = v; store.set("epg_on", v); }));
