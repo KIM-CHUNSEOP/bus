@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CasubTV</title>
 <meta name="theme-color" content="#0B0D12">
+<link rel="icon" href="logo.png">
 <style>
 :root{--bg:#0B0D12;--accent:#4AA3FF;--yellow:#FFD60A;--dim:#8D98A3;--txt:#CFD6DD;--glass:rgba(0,0,0,.55)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -17,11 +18,20 @@ video.cover{object-fit:cover}video.fill{object-fit:fill}
 /* 스플래시 */
 #splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:100;transition:opacity .6s}
 #splash.out{opacity:0;pointer-events:none}
-#splash .logo{font-size:56px;font-weight:800;letter-spacing:2px}
-#splash .logo b{color:var(--accent)}
-#splash .bar{width:200px;height:3px;background:#222a35;border-radius:2px;overflow:hidden}
-#splash .bar i{display:block;width:40%;height:100%;background:var(--accent);animation:sl 1.1s infinite ease-in-out}
-@keyframes sl{0%{margin-left:-40%}100%{margin-left:100%}}
+/* 앱 아이콘 로고: 본체는 위→아래로 나타나고, 안테나 점은 마지막에 켜져 깜빡인다 (앱 Splash.kt와 동일, 분할선 135/432) */
+.logo{position:relative;width:min(240px,60vw);aspect-ratio:1}
+.logo img{position:absolute;inset:0;width:100%;height:100%}
+.logo .body{clip-path:inset(31.25% 0 0 0)}
+.logo .dot{clip-path:inset(0 0 68.75% 0)}
+#splash .logo{transform:scale(.9);animation:lgScale 1.5s ease-out forwards}
+#splash .logo .body{opacity:0;clip-path:inset(31.25% 0 100% 0);animation:lgBody 1.125s cubic-bezier(.4,0,.2,1) forwards}
+#splash .logo .dot{opacity:0;animation:lgDotIn .375s linear 1.125s forwards,lgPulse .7s ease-in-out 1.5s infinite alternate}
+#splash .sm{color:var(--dim);font-size:14px;margin-top:-6px;opacity:0;animation:lgDotIn .45s linear 1.05s forwards}
+@keyframes lgScale{to{transform:scale(1)}}
+@keyframes lgBody{to{opacity:1;clip-path:inset(31.25% 0 0 0)}}
+@keyframes lgDotIn{to{opacity:1}}
+@keyframes lgPulse{from{opacity:.35}to{opacity:1}}
+#stopLogo .logo{width:min(240px,60vw)}
 
 /* 메시지 / 정지 로고 */
 #msg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:28px;text-align:center;text-shadow:0 2px 8px #000;z-index:5;pointer-events:none;padding:0 20px}
@@ -99,7 +109,7 @@ body:not(.ui){cursor:none}
 </head>
 <body>
 <div id="stage"><video id="v" playsinline autoplay></video></div>
-<div id="stopLogo" class="hidden">Casub<b>TV</b></div>
+<div id="stopLogo" class="hidden"><div class="logo"><img src="logo.png" alt=""></div></div>
 <div id="msg"></div>
 <div id="banner"><div class="ch"><div class="title" id="bTitle"></div><div class="sub" id="bSub"></div></div>
   <div class="sep" id="bSep1"></div><div class="epg" id="bEpg"></div>
@@ -123,7 +133,7 @@ body:not(.ui){cursor:none}
 
 <div id="settings" class="hidden"><div id="sbox"><div id="tabs"></div><div id="sbody"></div></div></div>
 
-<div id="splash"><div class="logo">Casub<b>TV</b></div><div class="bar"><i></i></div></div>
+<div id="splash"><div class="logo"><img class="body" src="logo.png" alt=""><img class="dot" src="logo.png" alt=""></div><div class="sm">채널 목록 불러오는 중…</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
 <script>
@@ -142,6 +152,7 @@ const SKIP_DELAYS = [3, 5, 10], SKIP_MAX_CHAIN = 5, LIST_IDLE_MS = 10000;
 const CHANNEL_SYNC_MS = 6*3600e3, EPG_SYNC_MS = 3*3600e3, TOKEN_REFRESH_MS = 15*60e3, TOKEN_SOON_MS = 30*60e3;
 const ASPECTS = ["맞춤","채우기","늘이기"], ASPECT_CLS = ["","cover","fill"];
 const BAD_TTL = 30*60e3;
+const MAX_CHANNELS = 60; // 61번째 채널부터는 목록에서 제외
 
 /* ───────── 저장소 ───────── */
 const store = {
@@ -275,10 +286,11 @@ const clearBad = n => { if(bad[n]){ delete bad[n]; store.set("bad", bad); } };
 const Filter = {
   visible(list, now=Date.now()){
     const r = list.filter(c => !bad[c.name] && !isExpired(c, now));
-    return r.length ? r : list;
+    return (r.length ? r : list).slice(0, MAX_CHANNELS);
   },
   shown(visible){
-    return S.favOnly && visible.some(c=>S.favs.has(c.name)) ? visible.filter(c=>S.favs.has(c.name)) : visible;
+    const r = S.favOnly && visible.some(c=>S.favs.has(c.name)) ? visible.filter(c=>S.favs.has(c.name)) : visible;
+    return r.slice(0, MAX_CHANNELS);
   },
   keepPlaying(visible, source, name, holding){
     if(!name || visible.some(c=>c.name===name) || !holding) return visible;
