@@ -150,6 +150,8 @@ const SKIP_DELAYS = [3, 5, 10], SKIP_MAX_CHAIN = 5, LIST_IDLE_MS = 10000;
 const CHANNEL_SYNC_MS = 6*3600e3, EPG_SYNC_MS = 3*3600e3, TOKEN_REFRESH_MS = 15*60e3, TOKEN_SOON_MS = 30*60e3;
 const ASPECTS = ["맞춤","채우기","늘이기"], ASPECT_CLS = ["","cover","fill"];
 const BAD_TTL = 30*60e3;
+const BLOCKED = new Set(["한국영화1","한국영화2","한국영화3","CNN","CBS News","BBC","ANTV","NDTV","F1","FAILARMY"]); // 목록에서 완전히 뺄 채널
+const BLOCKED_GROUPS = new Set(["ENGLISH"]); // 이 그룹의 채널은 전부 뺀다(대문자로 비교)
 const MAX_CHANNELS = 60; // 61번째 채널부터는 목록에서 제외
 
 /* ───────── 저장소 ───────── */
@@ -211,6 +213,7 @@ function parseChannels(text){
   const out = [];
   for(const o of arr){
     if(!o || isChinese(o.group, o.name, o.title)) continue;
+    if(BLOCKED.has(o.name) || BLOCKED.has(o.title) || BLOCKED_GROUPS.has((o.group||"").trim().toUpperCase())) continue;
     const uris = (o.uris||[]).filter(u => typeof u==="string" && u.startsWith("http"));
     if(!uris.length) continue;
     out.push({group:o.group||"", name:o.name||"", title:o.title || o.name, logo:o.logo||"", uris, headers:o.headers||{}});
@@ -252,7 +255,7 @@ function applyPlaylists(list, names, mirrors){
     return {...ch, uris:[...m, ...ch.uris.filter(u=>!m.includes(u))]};
   });
   const known = new Set(list.map(c=>c.name));
-  const extra = [...(names||[])].filter(n=>!known.has(n) && !isChinese("", n, n))
+  const extra = [...(names||[])].filter(n=>!known.has(n) && !isChinese("", n, n) && !BLOCKED.has(n))
     .map(n=>({group:"기타", name:n, title:n, logo:"", uris:masterUrls(n, mirrors), headers:{}}));
   return [...merged, ...extra];
 }
