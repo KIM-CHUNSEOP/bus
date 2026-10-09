@@ -12,6 +12,8 @@
 html,body{margin:0;height:100%;background:#000;color:#fff;font-family:"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;overflow:hidden;user-select:none}
 #stage{position:fixed;inset:0;background:#000}
 video{width:100%;height:100%;object-fit:contain;background:#000;display:block}
+video::-webkit-media-controls,video::-webkit-media-controls-enclosure,video::-webkit-media-controls-panel,video::-webkit-media-controls-overlay-play-button,video::-webkit-media-controls-start-playback-button{display:none!important;-webkit-appearance:none;opacity:0}
+video::-internal-media-controls-overlay-cast-button{display:none}
 video.cover{object-fit:cover}video.fill{object-fit:fill}
 .hidden{display:none!important}
 
@@ -108,7 +110,7 @@ body:not(.ui){cursor:none}
 </style>
 </head>
 <body>
-<div id="stage"><video id="v" playsinline autoplay></video></div>
+<div id="stage"><video id="v" playsinline webkit-playsinline autoplay disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video></div>
 <div id="stopLogo" class="hidden"><div class="logo"><img src="logo.png" alt=""></div></div>
 <div id="msg"></div>
 <div id="banner"><div class="ch"><div class="title" id="bTitle"></div><div class="sub" id="bSub"></div></div>
