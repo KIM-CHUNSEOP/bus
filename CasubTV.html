@@ -39,23 +39,39 @@ video::-internal-media-controls-overlay-cast-button{display:none}
 #stopLogo{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:4;font-size:64px;font-weight:800}
 #stopLogo b{color:var(--accent)}
 
-/* 하단 배너 */
-#banner{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);width:min(900px,94vw);background:rgba(0,0,0,.6);border-radius:12px;padding:12px 18px 10px;z-index:10;opacity:0;pointer-events:none;transition:opacity .25s;display:flex;align-items:center;gap:0}
+/* 좌상단 배너 (앱 ChannelBanner와 동일: 사선 모양, 번호 | 로고·프로그램 정보 | 날짜·시각) */
+#banner{--s:1;position:fixed;left:0;top:24px;box-sizing:border-box;height:calc(98px*var(--s));max-width:96vw;padding:0 calc(29.6px*var(--s)) 0 calc(20px*var(--s));background:rgba(11,17,20,.9);clip-path:polygon(0 0,100% 0,calc(100% - 19.6px*var(--s)) 100%,0 100%);z-index:10;opacity:0;pointer-events:none;transition:opacity .25s;display:flex;align-items:center}
 #banner.show{opacity:1}
-#banner .ch{flex:1;min-width:0}
-#banner .title{font-size:28px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#banner .title.loading{color:var(--yellow)}
-#banner .sub{font-size:20px;color:#ccc}
-#banner .sep{width:1.5px;height:40px;background:rgba(255,255,255,.4);margin:0 16px}
-#banner .epg{flex:1.3;min-width:0;font-size:14px;color:#B4BEC8}
-#banner .epg div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#banner .epg .now{font-size:16px;color:#fff}
-#banner .clock{text-align:right}
-#banner .clock small{display:block;font-size:14px;color:#B4BEC8}
-#banner .clock span{font-size:26px}
-#prog{position:absolute;left:18px;right:18px;bottom:4px;height:3px;border-radius:2px;background:rgba(255,255,255,.2)}
-#prog i{display:block;height:100%;width:0;background:var(--accent);border-radius:2px}
-@media(max-width:640px){#banner{flex-wrap:wrap}#banner .title{font-size:20px}#banner .sub{font-size:14px}#banner .epg,#banner .sep{display:none}#banner .clock span{font-size:18px}}
+#bNum{font-size:calc(50px*var(--s));font-weight:500;line-height:1;white-space:nowrap;margin-right:calc(16px*var(--s));flex:none}
+#bCol{min-width:0;display:flex;flex-direction:column;justify-content:center}
+#bHead{height:calc(34px*var(--s));display:flex;align-items:center;overflow:hidden;min-width:0}
+#bHead.loading .fl{color:var(--yellow)}
+.fl{white-space:nowrap;overflow:hidden;line-height:1.2}
+#bL2{color:#fff;margin-top:calc(-3px*var(--s))}
+#bL2.dim{color:#ccc}
+#bBar{margin:calc(5px*var(--s)) 0 calc(3px*var(--s));height:calc(4px*var(--s));border-radius:2px;flex:none}
+#bBar.on{background:rgba(255,255,255,.25)}
+#bBar i{display:block;height:100%;width:0;background:#fff;border-radius:2px}
+#bL3{color:#AEB7BB}
+#bVl{flex:none;margin:0 calc(14px*var(--s));width:1px;height:calc(53.9px*var(--s));background:rgba(91,102,107,.4)}
+#bClk{flex:none;text-align:center;white-space:nowrap}
+#bClk small{display:block;color:#AEB7BB;font-size:calc(12px*var(--s))}
+#bClk span{font-size:calc(24px*var(--s));font-weight:500}
+
+/* 방송사 로고 칸 (앱 LogoTile) */
+.lt{display:flex;align-items:center;justify-content:center;flex:none;border-radius:9px;background:#1A2027}
+.lt.plain{background:none;justify-content:flex-start;border-radius:0}
+.lt .li{width:78%;height:64%;display:flex;align-items:center;justify-content:center}
+.lt.plain .li{width:86%;height:80%;justify-content:flex-start}
+.lt img{width:100%;height:100%;object-fit:contain;object-position:center}
+.lt.plain img{object-position:left center}
+.lt.dim{opacity:.45}
+.gl{container-type:size;height:100%;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;padding:0 4px;box-sizing:border-box}
+.lt.plain .gl{width:92%}
+.gl div{white-space:nowrap;overflow:hidden;max-width:100%;line-height:1.1;text-align:center}
+.gl .m{font-weight:700;font-size:50cqh}
+.gl.sb .m{font-size:38cqh}
+.gl .s{font-weight:500;font-size:26cqh;opacity:.85}
 
 /* 토스트 */
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(20,24,30,.92);padding:10px 20px;border-radius:22px;font-size:16px;z-index:30;opacity:0;transition:opacity .25s;pointer-events:none;max-width:92vw;text-align:center}
@@ -73,11 +89,11 @@ video::-internal-media-controls-overlay-cast-button{display:none}
 .it{display:flex;align-items:center;gap:10px;padding:10px 14px 10px 16px;cursor:pointer;border-left:5px solid transparent;color:var(--txt)}
 .it:hover,.it.sel{background:rgba(255,255,255,.15)}
 .it.cur{color:#fff;border-left-color:var(--accent);background:rgba(255,255,255,.1)}
-.it img{width:34px;height:34px;object-fit:contain;border-radius:6px;background:rgba(255,255,255,.06);flex:none}
+.it .lt{width:56px;height:40px}
 .it .t{flex:1;min-width:0}
 .it .n{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it .p{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#menuBtn{position:fixed;left:14px;top:14px;z-index:12;background:rgba(255,255,255,.22);width:46px;height:46px;border-radius:50%;border:0;color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .25s}
+#menuBtn{position:fixed;right:14px;top:14px;z-index:12;background:rgba(255,255,255,.22);width:46px;height:46px;border-radius:50%;border:0;color:#fff;font-size:20px;cursor:pointer;opacity:0;transition:opacity .25s}
 body.ui #menuBtn{opacity:1}
 body:not(.ui){cursor:none}
 
@@ -106,10 +122,7 @@ body:not(.ui){cursor:none}
 <div id="stage"><video id="v" playsinline webkit-playsinline autoplay disablepictureinpicture disableremoteplayback controlslist="nodownload nofullscreen noremoteplayback" poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video></div>
 <div id="stopLogo" class="hidden"><div class="logo"><img src="logo.png" alt=""></div></div>
 <div id="msg"></div>
-<div id="banner"><div class="ch"><div class="title" id="bTitle"></div><div class="sub" id="bSub"></div></div>
-  <div class="sep" id="bSep1"></div><div class="epg" id="bEpg"></div>
-  <div class="sep" id="bSep2"></div><div class="clock" id="bClock"><small id="ampm"></small><span id="clk"></span></div>
-  <div id="prog"><i></i></div></div>
+<div id="banner"><div id="bNum"></div><div id="bCol"><div id="bHead"></div><div class="fl" id="bL2"></div><div id="bBar"><i></i></div><div class="fl" id="bL3"></div></div><div id="bVl"></div><div id="bClk"><small id="bDate"></small><span id="clk"></span></div></div>
 <div id="toast"></div>
 <button id="menuBtn" title="채널 목록">☰</button>
 
@@ -158,7 +171,7 @@ const store = {
   set(k, v){ try{ localStorage.setItem("ctv_"+k, JSON.stringify(v)); }catch{} },
 };
 const S = {
-  epgOn: store.get("epg_on", true), clockOn: store.get("clock_on", true),
+  epgOn: store.get("epg_on", true), clockOn: store.get("clock_on", true), logoOn: store.get("logo_on", true),
   swipeVol: store.get("swipe_vol", true), stopBtn: store.get("stop_btn", true),
   skipOn: store.get("skip_on", true), skipIdx: store.get("skip_delay", 1),
   last: store.get("last", null),
@@ -662,9 +675,111 @@ function toggleStop(){
   $("stopLogo").classList.remove("hidden");
 }
 
+/* ───────── 방송사 로고 (LogoCache.kt / MainActivity.kt LogoTile) ───────── */
+/* 직접 만든 로고(로고 이미지가 없는 방송용): 위 큰 글자 + 아래 작은 글자, 배경색/글자색 */
+const GEN_LOGOS = {
+  "아리랑TV":["ARIRANG","TV","#C8102E","#fff"], "TBSTV":["tbs","TV","#F58220","#fff"],
+  "복지TV":["복지TV",null,"#1E8E5A","#fff"], "농협TV":["NH","농협TV","#0B7A3B","#fff"],
+  "한국영화1":["KOREAN","MOVIE 1","#6B1F2A","#FFD27A"], "한국영화2":["KOREAN","MOVIE 2","#6B1F2A","#FFD27A"], "한국영화3":["KOREAN","MOVIE 3","#6B1F2A","#FFD27A"],
+  "CNN":["CNN",null,"#CC0000","#fff"], "CBS News":["CBS","NEWS","#0B3D91","#fff"], "BBC":["BBC","NEWS","#BB1919","#fff"],
+  "Bloomberg":["Bloomberg",null,"#111111","#fff"], "Fox":["FOX",null,"#003A70","#fff"], "NHKWorld":["NHK","WORLD","#1F4E9C","#fff"],
+  "ANTV":["ANTV",null,"#7B1FA2","#fff"], "NDTV":["NDTV",null,"#E53935","#fff"], "FashionTV":["FASHION","TV","#222222","#F5F5F5"],
+  "MOVIE1":["MOVIE","1","#5B2A86","#fff"], "MOVIE2":["MOVIE","2","#5B2A86","#fff"], "F1":["F1",null,"#E10600","#fff"],
+  "FAILARMY":["FAIL","ARMY","#F9A825","#1A1A1A"], "Drybarcomedy":["DRYBAR","COMEDY","#00796B","#fff"],
+};
+/* 목록에 없는 방송이 로고도 없을 때: 이름으로 만든 글자 로고(색은 이름에서 정해 항상 같다) */
+function autoGenLogo(name){
+  let h = 0; for(const ch of name) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
+  return [name, null, `hsl(${((h % 360) + 360) % 360} 55% 25%)`, "#fff"];
+}
+
+/* 투명 여백을 잘라낼 상자와 '어두운 로고' 여부 (analyzeLogo) */
+function analyzeLogo(px, w, h){
+  let minX = w, maxX = -1, minY = h, maxY = -1, opaque = 0, dark = 0;
+  for(let y = 0; y < h; y++) for(let x = 0; x < w; x++){
+    const i = (y*w + x) * 4;
+    if(px[i+3] <= 24) continue;
+    if(x < minX) minX = x; if(x > maxX) maxX = x; if(y < minY) minY = y; if(y > maxY) maxY = y;
+    opaque++;
+    const r = px[i], g = px[i+1], b = px[i+2];
+    const lum = (299*r + 587*g + 114*b) / 1000, chroma = Math.max(r,g,b) - Math.min(r,g,b);
+    if(lum < 55 || (lum < 140 && chroma < 70)) dark++;
+  }
+  if(!opaque) return {box:null, dark:false};
+  return {box:{x:minX, y:minY, w:maxX-minX+1, h:maxY-minY+1}, dark: dark*2 > opaque};
+}
+
+/* 메모리(48개) 보관, 같은 주소는 한 번만 받고, 실패한 주소는 5분간 다시 시도하지 않는다 */
+const LogoCache = {
+  MAX_DIM: 256, mem: new Map(), pending: new Map(), failedAt: new Map(),
+  cached(url){ return url ? this.mem.get(url) || null : null; },
+  async load(url){
+    if(!url) return null;
+    const hit = this.mem.get(url); if(hit) return hit;
+    const f = this.failedAt.get(url); if(f && Date.now() - f < 5*60e3) return null;
+    if(!this.pending.has(url)) this.pending.set(url, this._fetch(url).then(e=>{
+      this.pending.delete(url);
+      if(e){ this.mem.set(url, e); this.failedAt.delete(url); if(this.mem.size > 48) this.mem.delete(this.mem.keys().next().value); }
+      else this.failedAt.set(url, Date.now());
+      return e;
+    }));
+    return this.pending.get(url);
+  },
+  async _fetch(url){
+    try{ // 이미지를 직접 읽어 여백 제거 + 어두운 로고는 흰색으로 바꾼다
+      const r = await fetch(url, {mode:"cors", referrerPolicy:"no-referrer"});
+      if(!r.ok) throw 0;
+      const blob = await r.blob(); if(blob.size > 2e6) throw 0;
+      const bmp = await createImageBitmap(blob);
+      const k = Math.min(1, this.MAX_DIM / Math.max(bmp.width, bmp.height));
+      const w = Math.max(1, Math.round(bmp.width*k)), h = Math.max(1, Math.round(bmp.height*k));
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const g = cv.getContext("2d", {willReadFrequently:true}); g.drawImage(bmp, 0, 0, w, h);
+      const info = analyzeLogo(g.getImageData(0,0,w,h).data, w, h);
+      if(!info.box) throw 0;
+      const out = document.createElement("canvas"); out.width = info.box.w; out.height = info.box.h;
+      const og = out.getContext("2d");
+      og.drawImage(cv, info.box.x, info.box.y, info.box.w, info.box.h, 0, 0, info.box.w, info.box.h);
+      if(info.dark){ og.globalCompositeOperation = "source-in"; og.fillStyle = "#fff"; og.fillRect(0, 0, out.width, out.height); }
+      return {src: out.toDataURL("image/png")};
+    }catch{
+      // 이미지 서버가 CORS를 허용하지 않으면 분석 없이 그대로 보여 준다
+      return new Promise(res=>{ const im = new Image(); im.referrerPolicy = "no-referrer"; im.onload = ()=>res({src:url}); im.onerror = ()=>res(null); im.src = url; });
+    }
+  },
+};
+
+/* 글자가 칸보다 넓으면 폭에 맞게 줄인다 (FitText) */
+function fitText(el, maxPx, minPx){
+  el.style.fontSize = maxPx + "px";
+  if(el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 0.5)
+    el.style.fontSize = Math.max(minPx, maxPx * el.clientWidth / el.scrollWidth) + "px";
+}
+function genLogo(spec){
+  const [main, sub, bg, fg] = spec;
+  const g = document.createElement("div"); g.className = "gl" + (sub ? " sb" : ""); g.style.background = bg; g.style.color = fg;
+  const m = document.createElement("div"); m.className = "m"; m.textContent = main; g.appendChild(m);
+  if(sub){ const s = document.createElement("div"); s.className = "s"; s.textContent = sub; g.appendChild(s); }
+  requestAnimationFrame(()=> g.querySelectorAll("div").forEach(d=> fitText(d, parseFloat(getComputedStyle(d).fontSize), 7)));
+  return g;
+}
+/** 방송사 로고 한 칸. plain = true(상단 배너): 배경 없이 왼쪽 끝에 붙임. false(목록): 어두운 둥근 칸 안 가운데. */
+function logoTile(url, title, plain, dim){
+  const box = document.createElement("div"); box.className = "lt" + (plain ? " plain" : "") + (dim ? " dim" : "");
+  const inner = document.createElement("div"); inner.className = "li"; box.appendChild(inner);
+  const setGen = spec => { inner.textContent = ""; inner.appendChild(genLogo(spec)); };
+  const setImg = e => { inner.textContent = ""; const im = new Image(); im.alt = title; im.src = e.src; im.onerror = ()=>setGen(autoGenLogo(title)); inner.appendChild(im); };
+  const forced = GEN_LOGOS[title];
+  if(forced) setGen(forced);
+  else if(!url) setGen(autoGenLogo(title));
+  else { const c = LogoCache.cached(url); if(c) setImg(c); else LogoCache.load(url).then(e=> e ? setImg(e) : setGen(autoGenLogo(title))); }
+  return box;
+}
+
 /* ───────── 배너 / EPG ───────── */
 const fmt2 = n => String(n).padStart(2,"0");
 const hm = ms => { const d = new Date(ms); return `${fmt2(d.getHours())}:${fmt2(d.getMinutes())}`; };
+const dateKo = ms => { const d = new Date(ms); return `${d.getMonth()+1}월 ${d.getDate()}일 (${"일월화수목금토"[d.getDay()]})`; };
 function showBanner(){
   $("banner").classList.add("show");
   clearTimeout(bannerTimer);
@@ -678,31 +793,43 @@ function showEpgInfo(){
   epgTimer = setTimeout(()=>{ epgTimer = null; $("banner").classList.remove("show"); }, 5000);
 }
 function hideEpgInfo(){ clearTimeout(epgTimer); epgTimer = null; }
+let bannerKey = "";
 function updateBanner(){
   const ch = channels[index]; if(!ch) return;
-  const t = $("bTitle"); t.textContent = ch.title; t.classList.toggle("loading", loading);
-  $("bSub").textContent = `${index+1} / ${channels.length}  ·  ${ch.group}`;
-  const [cur, next] = S.epgOn ? nowNext(ch) : [null, null];
-  const e = $("bEpg");
-  e.innerHTML = "";
-  if(cur){
-    const a = document.createElement("div"); a.className = "now"; a.textContent = `${hm(cur.start)}–${hm(cur.stop)}  ${cur.title}`; e.appendChild(a);
-    if(next){ const b = document.createElement("div"); b.textContent = `다음 ${hm(next.start)}  ${next.title}`; e.appendChild(b); }
-    const pr = Math.max(0, Math.min(1, (Date.now()-cur.start)/Math.max(1, cur.stop-cur.start)));
-    document.querySelector("#prog i").style.width = (pr*100)+"%";
-  } else document.querySelector("#prog i").style.width = "0";
-  const hasEpg = !!cur;
-  $("bEpg").classList.toggle("hidden", !hasEpg); $("bSep1").classList.toggle("hidden", !hasEpg);
-  $("prog").style.visibility = hasEpg ? "visible" : "hidden";
-  $("bClock").classList.toggle("hidden", !S.clockOn); $("bSep2").classList.toggle("hidden", !S.clockOn);
+  const s = Math.min(1.2, Math.max(0.7, innerWidth / 720)), now = Date.now(), NB = " ";
+  $("banner").style.setProperty("--s", s);
+  $("bNum").textContent = index + 1;
+  // 로고 보기가 켜져 있으면 로고만(채널명과 중복), 꺼져 있으면 채널명. 칸 크기는 로고가 올 때까지도 같다
+  const head = $("bHead"), key = `${index}|${ch.title}|${ch.logo}|${S.logoOn}|${s}`;
+  head.classList.toggle("loading", loading);
+  if(key !== bannerKey){
+    bannerKey = key; head.textContent = "";
+    if(S.logoOn){
+      const t = logoTile(ch.logo, ch.title, true); t.style.width = 96*s + "px"; t.style.height = 34*s + "px"; head.appendChild(t);
+    } else { const t = document.createElement("div"); t.className = "fl"; t.style.fontWeight = 500; t.style.maxWidth = "100%"; t.textContent = ch.title; head.appendChild(t); }
+  }
+  const [cur] = S.epgOn ? nowNext(ch) : [null];
+  const l2 = $("bL2"), l3 = $("bL3"), bar = $("bBar");
+  l2.textContent = cur ? cur.title : (S.epgOn ? "정보 없음" : NB); l2.classList.toggle("dim", !cur);
+  bar.classList.toggle("on", !!cur);
+  bar.firstElementChild.style.width = cur ? Math.max(0, Math.min(1, (now - cur.start) / Math.max(1, cur.stop - cur.start))) * 100 + "%" : "0";
+  const left = cur ? Math.floor((cur.stop - now) / 60000) : 0;
+  l3.textContent = cur ? `${hm(cur.start)} ~ ${hm(cur.stop)}` + (left > 0 ? ` · ${left}분 남음` : "") : NB;
+  $("bVl").classList.toggle("hidden", !S.clockOn); $("bClk").classList.toggle("hidden", !S.clockOn);
   tickClock();
+  // 글자는 먼저 기본 크기로 둔 뒤, 폭이 모자라면 줄인다
+  const ft = head.querySelector(".fl");
+  if(ft) ft.style.fontSize = 26*s + "px";
+  l2.style.fontSize = 17*s + "px"; l3.style.fontSize = 13*s + "px";
+  if(ft) fitText(ft, 26*s, 13);
+  fitText(l2, 17*s, 11); fitText(l3, 13*s, 9);
 }
 function tickClock(){
-  const d = new Date(), h = d.getHours();
-  $("ampm").textContent = h < 12 ? "오전" : "오후";
-  $("clk").textContent = `${h%12 || 12}:${fmt2(d.getMinutes())}`;
+  const now = Date.now();
+  $("bDate").textContent = dateKo(now); $("clk").textContent = hm(now);
 }
-setInterval(()=>{ tickClock(); if($("banner").classList.contains("show")) updateBanner(); }, 15000);
+addEventListener("resize", ()=>{ if($("banner").classList.contains("show")) updateBanner(); });
+setInterval(()=>{ tickClock(); if($("banner").classList.contains("show")) updateBanner(); }, 10000);
 
 /* ───────── 채널 목록 ───────── */
 function renderList(onlyCurrent){
@@ -715,8 +842,8 @@ function renderList(onlyCurrent){
     const d = document.createElement("div");
     d.className = "it" + (i===index ? " cur" : "") + (i===cursor ? " sel" : ""); d.dataset.i = i;
     const [cur] = S.epgOn ? nowNext(c) : [null];
-    d.innerHTML = `${c.logo ? `<img loading="lazy" referrerpolicy="no-referrer" alt="">` : ""}<div class="t"><div class="n"></div><div class="p"></div></div>`;
-    if(c.logo) d.querySelector("img").src = c.logo, d.querySelector("img").onerror = e=>e.target.remove();
+    d.innerHTML = `<div class="t"><div class="n"></div><div class="p"></div></div>`;
+    if(S.logoOn) d.insertBefore(logoTile(c.logo, c.title, false), d.firstChild);
     d.querySelector(".n").textContent = `${i+1}  ${c.title}`;
     d.querySelector(".p").textContent = cur ? cur.title : c.group;
     d.onclick = ()=>select(i);
@@ -864,6 +991,7 @@ function renderSettings(){
 
   if(sTab === 0){
     add(swRow("EPG 표시", "채널이 나오면 하단에 편성 정보를 잠깐 보여 줍니다", S.epgOn, v=>{ S.epgOn = v; store.set("epg_on", v); }));
+    add(swRow("방송사 로고 표시", "정보창과 채널 목록에 방송사 로고 표시", S.logoOn, v=>{ S.logoOn = v; store.set("logo_on", v); }));
     add(swRow("시계 표시", "정보창 오른쪽 끝에 현재 시각", S.clockOn, v=>{ S.clockOn = v; store.set("clock_on", v); }));
     add(swRow("밀어서 볼륨 조절", "터치 화면을 위/아래로 밀어 볼륨 조절", S.swipeVol, v=>{ S.swipeVol = v; store.set("swipe_vol", v); }));
   } else if(sTab === 1){
